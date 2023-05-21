@@ -27,6 +27,7 @@ tail(sort(unique(st$PLOT)))
 stpba <- tapply(st$ba,list(st$PLOT,st$SPCD),sum)
 dim(stpba)
 head(stpba)
+tail(stpba)
 head(rownames((stpba)))
 tail(rownames((stpba)))
 
