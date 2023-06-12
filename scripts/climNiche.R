@@ -5,7 +5,7 @@ library('mvtnorm')
 cd <- read.csv('data/test_data/test_climDat.csv',row.names = 1)
 
 # cd is a point data set of climate data for a species
-# col1 to be species name
+# col1: species name
 # col2-3: latitude,longitude (in any units)
 # col4+ climate data (any number of variables)
 climNicheDirect <- function(cd) {

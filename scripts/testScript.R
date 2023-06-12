@@ -19,6 +19,7 @@ plot(aet,xlim=rangeExtend(cd$longitude),ylim=rangeExtend(cd$latitude))
 points(cd$long,cd$lat)
 plot(cd$cwd,cd$aet)
 
+## see climNiche.R for specification of the input format
 cn <- climNicheDirect(cd)
 
 cn$climStats
