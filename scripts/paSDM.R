@@ -6,35 +6,39 @@
 # col 3: latitude
 # col 4: env var 1
 # col 5: env var 2
+# col 6 (optional): pa - presence/absence
 library('lme4')
 pasdm <- function(cd,st,npa=10000) {
   vnames <- names(cd)[4:5]
-  cd$pa <- 1 # set all points as 'presence'
   
-  # sample equal number of random pseudoabsence points
-  stv <- values(st)
-  dim(stv)
-  stv <- stv[which(is.finite(stv[,1])),]
-  dim(stv)
-  head(stv)
-  
-  rsamp <- sample(1:nrow(stv),npa)
-  abs <- stv[rsamp,] # absence points
-  head(abs)
-  
-  # put absence points in new data.frame with same structure as cd
-  cda <- data.frame(x1=rep(NA,npa),x2=NA,x3=NA,x4=NA,x5=NA,pa=0)
-  names(cda) <- names(cd)
-  cda[,4:5] <- abs
-  head(cda)
-  
-  # combine into one data.frame with presence and absence points
-  cd2 <- rbind(cd,cda)
-  
-  # squared terms for quadratics
-  cd2$aet2 <- cd2$aet^2
-  cd2$cwd2 <- cd2$cwd^2
-  
+  # if presence/absence points already present, skip directly to running model
+  if (!'pa' %in% names(cd)) {
+    cd$pa <- 1 # create pa and set all points as 'presence'
+    
+    # sample equal number of random pseudoabsence points
+    stv <- values(st)
+    dim(stv)
+    stv <- stv[which(is.finite(stv[,1])),]
+    dim(stv)
+    head(stv)
+    
+    rsamp <- sample(1:nrow(stv),npa)
+    abs <- stv[rsamp,] # absence points
+    head(abs)
+    
+    # put absence points in new data.frame with same structure as cd
+    cda <- data.frame(x1=rep(NA,npa),x2=NA,x3=NA,x4=NA,x5=NA,pa=0)
+    names(cda) <- names(cd)
+    cda[,4:5] <- abs
+    head(cda)
+    
+    # combine into one data.frame with presence and absence points
+    cd2 <- rbind(cd,cda)
+    
+    # squared terms for quadratics
+    cd2$aet2 <- cd2$aet^2
+    cd2$cwd2 <- cd2$cwd^2
+  }
   # fit logistic
   fit <- glm(pa~aet+cwd+aet2+cwd2,data=cd2,family='binomial')
   
@@ -55,6 +59,6 @@ pasdm <- function(cd,st,npa=10000) {
   
   nd$pVal <- predict(fit,nd)
   opt <- which.max(nd$pVal)
-  return(list(cd2,nd,mpt,opt))
+  return(list(cd2,nd,mpt,opt,npa))
 }
 

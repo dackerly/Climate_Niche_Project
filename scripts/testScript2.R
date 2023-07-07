@@ -57,11 +57,8 @@ plot(cwd,xlim=rangeExtend(cd$longitude),ylim=rangeExtend(cd$latitude))
 points(cd[,c('longitude','latitude')],pch=19,col=ramp$Hex[pVals])
 
 ## NOW add species distribution modeling to calculate climatic optima
-source('scripts/paSDM.R')
-
-plot(st)
-dim(cd)
 head(cd)
+source('scripts/paSDM.R')
 
 glmRes <- pasdm(cd,st)
 cd2 <- glmRes[[1]]
@@ -71,7 +68,7 @@ opt <- glmRes[[4]]
 
 # plot(cd2[,4:5])
 # points(cd[,4:5],pch=1,col='red')
-plot(pa~pVal,data=cd2)
+# plot(pa~pVal,data=cd2)
 
 plot(cd2[,4:5],xlim=c(0,max(nd$aet)),ylim=c(0,max(nd$cwd)))
 points(cd[,4:5],pch=19,col='red')
