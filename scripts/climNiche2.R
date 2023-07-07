@@ -1,5 +1,7 @@
 # climate niche functions
 library('mvtnorm')
+library('mnormt')
+require('terra')
 
 # temporary for code development
 cd <- read.csv('data/test_data/test_climDat.csv',row.names = 1)
@@ -14,7 +16,7 @@ climNiche <- function(cd,st=NULL,onePerCell=F,trunc=0,comp.cases=T) {
   # if user supplied stack of climate rasters is available, then data.frame is trimmed to first three columns (species, long, lat) and climate values are extracted from provided raster stack. This ensures that names and order of climate variables in stack and in data.frame are aligned. If user does not provide raster stack, then climVars must be in cd dataframe and descriptive stats are calculated on data provided.  
   if (!is.null(st)) {
     cd <- cd[,1:3]
-    for (i in 1:nlayers(st)) cd <- cbind(cd,extract(st[[i]],cd[,2:3]))
+    for (i in 1:dim(st)[3]) cd <- cbind(cd,extract(st[[i]],cd[,2:3])[,2])
     names(cd)[-c(1:3)] <- names(st)
   }
   
@@ -86,7 +88,7 @@ climNiche <- function(cd,st=NULL,onePerCell=F,trunc=0,comp.cases=T) {
     cn$climStats$wtd.mean <- NA
     i=2
     for (i in 1:nClim) {
-      hClim <- hist(getValues(st[[i]]),breaks=20,plot=F)
+      hClim <- hist(values(st[[i]]),breaks=20,plot=F)
       
       vals <- sort(cdu[,cCols[i]])
       if (trunc>0) {
