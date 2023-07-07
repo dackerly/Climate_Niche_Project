@@ -117,11 +117,11 @@ plot(aetVals[rsamp],cwdVals[rsamp],col='gray',pch=19,cex=0.5)
 points(aetAll$wtd.mean,cwdAll$wtd.mean,pch=19,col='blue')
 
 plot(aetVals[rsamp],cwdVals[rsamp],col='gray',pch=19,cex=0.5)
-points(aetAll$wtd.mean,cwdAll$mpt,pch=19,col='blue')
+points(aetAll$mpt,cwdAll$mpt,pch=19,col='blue')
 
 plot(aetVals[rsamp],cwdVals[rsamp],col='gray',pch=19,cex=0.5)
-points(aetAll$wtd.mean,cwdAll$mat,pch=19,col='blue')
+points(aetAll$mat,cwdAll$mat,pch=19,col='blue')
 
-plot(aetVals[rsamp],cwdVals[rsamp],col='gray',pch=19,cex=0.5,xlim=c(0,600),ylim=c(0,4000))
-points(aetAll$wtd.mean,cwdAll$opt,pch=19,col='blue')
+plot(aetVals[rsamp],cwdVals[rsamp],col='gray',pch=19,cex=0.5,xlim=c(0,1200),ylim=c(0,4000))
+points(aetAll$opt,cwdAll$opt,pch=1,col='blue')
 

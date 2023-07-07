@@ -2,6 +2,8 @@
 rm(list=ls())
 library('mvtnorm')
 library('terra')
+library('dismo')
+library('raster')
 source('scripts/climNiche2.R')
 source('scripts/paSDM.R')
 
@@ -20,6 +22,7 @@ rangeExtend <- function(x,extAmount=0.5) {
 
 cd <- read.csv('data/test_data/test_climDat.csv',row.names = 1)
 head(cd)
+if ('pa' %in% names(cd)) cd <- cd[,-grep('pa',names(cd))]
 table(cd$scientificName)
 
 op <- par(mfrow=c(1,2))
@@ -67,17 +70,32 @@ mpt <- glmRes[[3]]
 mat <- glmRes[[4]]
 opt <- glmRes[[5]]
 
-# plot(cd2[,4:5])
-# points(cd[,4:5],pch=1,col='red')
+# plot(cd2[,c('aet','cwd')])
+# points(cd[,c('aet','cwd')],pch=1,col='red')
 # plot(pa~pVal,data=cd2)
 
-plot(cd2[,4:5],xlim=c(0,max(nd$aet)),ylim=c(0,max(nd$cwd)))
-points(cd[,4:5],pch=19,col='red')
-points(cd2[mpt,4:5],pch=19,col='blue',cex=2)
+plot(cd2[,c('aet','cwd')],xlim=c(0,max(nd$aet)),ylim=c(0,max(nd$cwd)))
+points(cd[,c('aet','cwd')],pch=19,col='red')
+points(cd2[mpt,c('aet','cwd')],pch=19,col='blue',cex=2)
 points(nd[opt,1:2],pch=19,col='green',cex=2)
 
-cn$climStats$mpt <- as.numeric(cd2[mpt,4:5])
-cn$climStats$mat <- as.numeric(cd2[mat,4:5])
+cn$climStats$mpt <- as.numeric(cd2[mpt,c('aet','cwd')])
+cn$climStats$mat <- as.numeric(cd2[mat,c('aet','cwd')])
 cn$climStats$opt <- as.numeric(nd[opt,1:2])
 
 cn$climStats
+
+# now try maxent
+head(cd)
+dim(cd)
+
+aetr <- raster('data/gis_data/CAaet.tiff')
+cwdr <- raster('data/gis_data/CAcwd.tiff')
+str <- stack(aetr,cwdr)
+
+mx <- maxent(str,cd[,c('longitude','latitude')])
+mx
+str(mx)
+plot(mx)
+head(mx@presence)
+head(mx@absence)
