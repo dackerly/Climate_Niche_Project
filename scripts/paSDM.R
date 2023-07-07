@@ -47,10 +47,11 @@ pasdm <- function(cd,st,npa=10000) {
   
   # find point within presence data with highest pVal
   mpt <- which.max(cd2$pVal[which(cd2$pa==1)])
+  mat <- which.max(cd2$pVal)
   
   # create artificial data, extending env vars from 0 to 2X
-  aetVals <- seq(0,2*max(cd$aet),length.out=100)
-  cwdVals <- seq(0,2*max(cd$cwd),length.out=100)
+  aetVals <- seq(0,2*max(cd$aet,na.rm=T),length.out=100)
+  cwdVals <- seq(0,2*max(cd$cwd,na.rm=T),length.out=100)
   
   xx <- expand.grid(aetVals,cwdVals)
   nd <- data.frame(aet=xx[,1],cwd=xx[,2])
@@ -59,6 +60,8 @@ pasdm <- function(cd,st,npa=10000) {
   
   nd$pVal <- predict(fit,nd)
   opt <- which.max(nd$pVal)
-  return(list(cd2,nd,mpt,opt,npa))
+  
+  gr <- list(cd2,nd,mpt,mat,opt)
+  return(gr)
 }
 

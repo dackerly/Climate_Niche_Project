@@ -64,7 +64,8 @@ glmRes <- pasdm(cd,st)
 cd2 <- glmRes[[1]]
 nd <- glmRes[[2]]
 mpt <- glmRes[[3]]
-opt <- glmRes[[4]]
+mat <- glmRes[[4]]
+opt <- glmRes[[5]]
 
 # plot(cd2[,4:5])
 # points(cd[,4:5],pch=1,col='red')
@@ -76,6 +77,7 @@ points(cd2[mpt,4:5],pch=19,col='blue',cex=2)
 points(nd[opt,1:2],pch=19,col='green',cex=2)
 
 cn$climStats$mpt <- as.numeric(cd2[mpt,4:5])
+cn$climStats$mat <- as.numeric(cd2[mat,4:5])
 cn$climStats$opt <- as.numeric(nd[opt,1:2])
 
 cn$climStats
