@@ -3,6 +3,7 @@ rm(list=ls())
 library('mvtnorm')
 library('terra')
 source('scripts/climNiche2.R')
+source('scripts/paSDM.R')
 
 aet <- rast('data/gis_data/CAaet.tiff')
 cwd <- rast('data/gis_data/CAcwd.tiff')
@@ -56,15 +57,28 @@ plot(cwd,xlim=rangeExtend(cd$longitude),ylim=rangeExtend(cd$latitude))
 points(cd[,c('longitude','latitude')],pch=19,col=ramp$Hex[pVals])
 
 ## NOW add species distribution modeling to calculate climatic optima
-library('dismo')
-library('raster')
-library('rJava')
+source('scripts/paSDM.R')
 
-aet <- raster('data/gis_data/CAaet.tiff')
-cwd <- raster('data/gis_data/CAcwd.tiff')
-evar <- stack(aet,cwd)
+plot(st)
+dim(cd)
 head(cd)
 
-mx <- maxent(evar,cd[,2:3])
+glmRes <- pasdm(cd,st)
+cd2 <- glmRes[[1]]
+nd <- glmRes[[2]]
+mpt <- glmRes[[3]]
+opt <- glmRes[[4]]
 
-system.file('java',package='dismo')
+# plot(cd2[,4:5])
+# points(cd[,4:5],pch=1,col='red')
+plot(pa~pVal,data=cd2)
+
+plot(cd2[,4:5],xlim=c(0,max(nd$aet)),ylim=c(0,max(nd$cwd)))
+points(cd[,4:5],pch=19,col='red')
+points(cd2[mpt,4:5],pch=19,col='blue',cex=2)
+points(nd[opt,1:2],pch=19,col='green',cex=2)
+
+cn$climStats$mpt <- as.numeric(cd2[mpt,4:5])
+cn$climStats$opt <- as.numeric(nd[opt,1:2])
+
+cn$climStats
