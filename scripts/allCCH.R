@@ -73,6 +73,8 @@ for (i in ssel) {
   print(i)
   sname <- uNames[i]
   cd <- cch[cch$name==sname,]
+  
+  # filter to minimum number of observations
   if (nrow(cd)>=20) {
     cn <- climNiche(cd,st,onePerCell=T,trunc=0.05)
     glmRes <- pasdm(cd,st)
@@ -86,6 +88,7 @@ for (i in ssel) {
     cwdAll <- rbind(cwdAll,data.frame(name=sname,cn$climStats[2,]))
   }
 }
+dim(aetAll)
 head(aetAll)
 head(cwdAll)
 
