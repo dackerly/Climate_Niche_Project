@@ -19,21 +19,33 @@ rangeExtend <- function(x,extAmount=0.5) {
   return(rx)
 }
 
-input.data <- read.csv('data/test_data/test_climDat.csv',row.names = 1)
-head(input.data)
-if (!'pa' %in% names(input.data)) input.data$pa <- 1
+# read in CA plant biodiversity database
+cch <- readRDS('big_data/CCH_clean_data/California_Species_clean_All_epsg_3310.Rdata')
+head(cch)
+
+# prepare input data for one species
+spname <- 'Quercus kelloggii'
+spname <- 'Quercus douglasii'
+cd <- cch[which(cch$current_name_binomial==spname),c('current_name_binomial','longitude','latitude')]
+if (!'pa' %in% names(cd)) cd$pa <- 1
+names(cd)[1] <- 'name'
+cd$name <- as.character(cd$name)
+cd <- cd[,c('name','pa','longitude','latitude')]
+dim(cd)
+head(cd)
+tail(cd)
+
+# for black oak there's one weird climate outlier - up near Shasta and in a very low cwd spot, throws off convex hull
+if (spname=='Quercus kelloggii') cd <- cd[-688,]
+
+
 
 ## input data.frame should have minimum of 4 columns:
 # c1: species name
 # c2: presence/absence - all 1s for original obs data
 # c3-4: longitude/latitude
-cd <- input.data[,c('name','pa','longitude','latitude')]
-head(cd)
 
 # add pseudoabsence values, sampled in this case from CCH to reflectsampling bias
-cch <- readRDS('big_data/CCH_clean_data/California_Species_clean_All_epsg_3310.Rdata')
-head(cch)
-
 npa <- 10000
 rsamp <- sample(1:nrow(cch),npa)
 
@@ -48,21 +60,25 @@ cd$cwd <- extract(cwd,cd[,c('longitude','latitude')])[,2]
 head(cd)
 tail(cd)
 
-# create gridded env data, if desired to extrapolate optimal conditions beyond environmental background
-aetVals <- seq(0,2*max(cd$aet,na.rm=T),length.out=100)
-cwdVals <- seq(0,2*max(cd$cwd,na.rm=T),length.out=100)
-xx <- expand.grid(aetVals,cwdVals)
-nd <- data.frame(name='GriddedEnv',pa=c(-1),longitude=NA,latitude=NA,aet=xx[,1],cwd=xx[,2])
-
-cd <- rbind(cd,nd)
-table(cd$name)
-tail(cd)
-
+# look at presence data
 op <- par(mfrow=c(1,2))
 plot(aet)
 points(cd[cd$pa==1,c('longitude','latitude')])
 plot(cwd~aet,data=cd[cd$pa==1,])
 par(op)
+
+
+# create gridded env data, if desired to extrapolate optimal conditions beyond environmental background
+aetVals <- seq(0,2*max(cd$aet,na.rm=T),length.out=100)
+cwdVals <- seq(0,2*max(cd$cwd,na.rm=T),length.out=100)
+xx <- expand.grid(aetVals,cwdVals)
+nd <- data.frame(name='GriddedEnv',pa=c(-1),longitude=NA,latitude=NA,aet=xx[,1],cwd=xx[,2])
+head(nd)
+tail(nd)
+
+cd <- rbind(cd,nd)
+table(cd$name)
+tail(cd)
 
 # fit a glm to the presence data, against pseudoabsence
 # add quadratic values
@@ -75,15 +91,16 @@ fit
 
 # calculate climate niche statistics, using presence, absence, and (optionally GriddedEnv data), and the model
 head(cd)
+tail(cd)
+dim(cd)
 write.csv(cd,'data/test_data/expanded_test_data.csv')
 
 cn <- climNiche3(cd,vCols=5:6,trunc=0.01,model=fit)
 cn$climStats
 
 head(cn$climData)
-hist(cn$climData$pVal)
-
-
+tail(cn$climData)
+hist(cn$climData$pVal[cn$climData$pa==1])
 
 # read in a color ramp
 ramp <- read.csv('data/colorRamps/jja6ColRamp.csv',as.is=T)

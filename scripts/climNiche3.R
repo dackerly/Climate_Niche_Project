@@ -4,7 +4,7 @@ library('mnormt')
 require('terra')
 
 # temporary for code development
-cd <- read.csv('data/test_data/expanded_test_data.csv',row.names = 1)
+#cd <- read.csv('data/test_data/expanded_test_data.csv',row.names = 1)
 
 # cd is a point data set of climate data for a species
 # col1: species name
@@ -94,6 +94,12 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
     }
     
     # convex hull centroid
+    sv <- vect(as.matrix(cd[p,vCols]),type='points')
+    #plot(sv)
+    ch <- convHull(sv)
+    #lines(ch)
+    cc <- centroids(ch)
+    cn$climStats$chc <- ext(cc)[c(1,3)]
     
     # model fit
     if (!is.null(model)) {
