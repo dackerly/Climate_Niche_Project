@@ -32,7 +32,11 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
   names(cn) <- 'climStats'
   
   # p is rows for presence data
+  # a is absence of pseudoabsence
+  # e is optional, other environmental setting to project into
   p <- which(cd$pa==1)
+  a <- which(cd$pa==0)
+  e <- which(cd$pa==c(-1))
   
   #step through climate variables and calculate descriptive stats
   i=2
@@ -77,6 +81,7 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
   # if user has supplied absence or pseudoabsence data, then calculate climate means based on proportion of available data space used
   # if trunc>0, then truncate the requested proportion of records from either end of the climate values distribution. This is provided because one or a few extreme values that may fall in very rare climate types can skew the mean value a lot. Compare results with trunc=0 and trunc=0.01 or 0.05 to see the effect
   
+  if (length(a)>0) {
     cn$climStats$wtd.mean <- NA
     i=1
     for (i in 1:nClim) {
@@ -92,27 +97,32 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
       oClim <- hist(vals,breaks=hClim$breaks,plot=F)
       cn$climStats$wtd.mean[i] <- weighted.mean(hClim$mids,oClim$counts/hClim$counts)
     }
-    
-    # convex hull centroid
-    sv <- vect(as.matrix(cd[p,vCols]),type='points')
-    #plot(sv)
-    ch <- convHull(sv)
-    #lines(ch)
-    cc <- centroids(ch)
-    cn$climStats$chc <- ext(cc)[c(1,3)]
-    
-    # model fit
-    if (!is.null(model)) {
-      cd$pVal <- predict(model,cd)
-      mpt <- which.max(cd$pVal[which(cd$pa==1)])
+  }
+  
+  # convex hull centroid
+  sv <- vect(as.matrix(cd[p,vCols]),type='points')
+  #plot(sv)
+  ch <- convHull(sv)
+  #lines(ch)
+  cc <- centroids(ch)
+  cn$climStats$chc <- ext(cc)[c(1,3)]
+  
+  # model fit
+  if (!is.null(model)) {
+    cd$pVal <- predict(model,cd)
+    mpt <- which.max(cd$pVal[which(cd$pa==1)])
+    cn$climStats$mpt <- as.numeric(cd[mpt,vCols])
+    if (length(a)>0) {
       mat <- which.max(cd$pVal[which(cd$pa>=0)])
-      opt <- which.max(cd$pVal[which(cd$pa==c(-1))])
-      cn$climStats$mpt <- as.numeric(cd[mpt,vCols])
       cn$climStats$mat <- as.numeric(cd[mat,vCols])
+    }
+    if (length(e)>0) {
+      opt <- which.max(cd$pVal[which(cd$pa==c(-1))])
       cn$climStats$opt <- as.numeric(cd[opt,vCols])
     }
-    # add updated climate data to cn object
-    cn[[4]] <- cd
-    names(cn)[4] <- 'climData'
+  }
+  # add updated climate data to cn object
+  cn[[4]] <- cd
+  names(cn)[4] <- 'climData'
   return(cn)
 }
