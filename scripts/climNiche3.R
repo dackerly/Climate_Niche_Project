@@ -36,6 +36,7 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
   # e is optional, other environmental setting to project into
   p <- which(cd$pa==1)
   a <- which(cd$pa==0)
+  pa <- which(cd$pa %in% c(0,1))
   e <- which(cd$pa==c(-1))
   
   #step through climate variables and calculate descriptive stats
@@ -85,7 +86,7 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
     cn$climStats$wtd.mean <- NA
     i=1
     for (i in 1:nClim) {
-      hClim <- hist(cd[cd$pa >= 0,vCols[i]],breaks=20,plot=F)
+      hClim <- hist(cd[pa,vCols[i]],breaks=20,plot=F)
       vals <- sort(cd[p,vCols[i]])
       if (trunc>0) {
         if (floor(length(vals)*trunc/2) < 1) tmp <- 1 else tmp <- floor(length(vals)*trunc/2)
@@ -109,16 +110,18 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
   
   # model fit
   if (!is.null(model)) {
+    cn$climStats$pwt.mean <- NA
     cd$pVal <- predict(model,cd)
-    mpt <- which.max(cd$pVal[which(cd$pa==1)])
-    cn$climStats$mpt <- as.numeric(cd[mpt,vCols])
+    for (i in 1:nClim) cn$climStats$pwt.mean[i] <- stats::weighted.mean(cd[p,vCols[i]],cd$pVal[p])
+    mpt <- which.max(cd$pVal[p])
+    cn$climStats$mpt <- as.numeric(cd[p[mpt],vCols])
     if (length(a)>0) {
-      mat <- which.max(cd$pVal[which(cd$pa>=0)])
-      cn$climStats$mat <- as.numeric(cd[mat,vCols])
+      mat <- which.max(cd$pVal[pa])
+      cn$climStats$mat <- as.numeric(cd[pa[mat],vCols])
     }
     if (length(e)>0) {
-      opt <- which.max(cd$pVal[which(cd$pa==c(-1))])
-      cn$climStats$opt <- as.numeric(cd[opt,vCols])
+      opt <- which.max(cd$pVal[e])
+      cn$climStats$opt <- as.numeric(cd[e[opt],vCols])
     }
   }
   # add updated climate data to cn object

@@ -2,15 +2,15 @@
 rm(list=ls())
 library('terra')
 library('dismo')
-library('raster')
 source('scripts/climNiche3.R')
-source('scripts/paSDM.R')
 
+# read in climate data using terra functions, and create stack
 aet <- rast('data/gis_data/CAaet.tiff')
 cwd <- rast('data/gis_data/CAcwd.tiff')
-
-# prepare raster stack
 st <- c(aet,cwd);names(st) <- c('aet','cwd')
+
+# also create raster class stack for maxent
+str <- stack(st)
 
 rangeExtend <- function(x,extAmount=0.5) {
   rx <- range(x)
@@ -37,8 +37,6 @@ tail(cd)
 
 # for black oak there's one weird climate outlier - up near Shasta and in a very low cwd spot, throws off convex hull
 if (spname=='Quercus kelloggii') cd <- cd[-688,]
-
-
 
 ## input data.frame should have minimum of 4 columns:
 # c1: species name
@@ -86,8 +84,14 @@ cd$aet2 <- cd$aet^2
 cd$cwd2 <- cd$cwd^2
 
 # fit logistic
-fit <- glm(pa~aet+cwd+aet2+cwd2+aet:cwd,data=cd[cd$pa %in% c(0,1),],family='binomial')
-fit
+glm.fit <- glm(pa~aet+cwd+aet2+cwd2+aet:cwd,data=cd[cd$pa %in% c(0,1),],family='binomial')
+glm.fit
+
+# fit maxent
+mx.fit <- dismo::maxent(cd[cd$pa %in% c(0,1),5:6],cd$pa[cd$pa %in% c(0,1)])
+# examine maxent results will open page in web browser
+#mx.fit
+str(mx.fit)
 
 # calculate climate niche statistics, using presence, absence, and (optionally GriddedEnv data), and the model
 head(cd)
@@ -95,12 +99,16 @@ tail(cd)
 dim(cd)
 write.csv(cd,'data/test_data/expanded_test_data.csv')
 
-cn <- climNiche3(cd,vCols=5:6,trunc=0.01,model=fit)
+### CALCULATE CLIMATE NICHE STATISTICS
+cn <- climNiche3(cd,vCols=5:6,trunc=0.01,model=mx.fit)
 cn$climStats
 
 head(cn$climData)
 tail(cn$climData)
 hist(cn$climData$pVal[cn$climData$pa==1])
+
+# plot multivariate normal probability against fitted model predicted value
+plot(pVal~mnScaledProb,data=cn$climData[cn$climData$pa==1,])
 
 # read in a color ramp
 ramp <- read.csv('data/colorRamps/jja6ColRamp.csv',as.is=T)
@@ -111,48 +119,16 @@ plot(1:nrow(ramp),1:nrow(ramp),pch=19,col=ramp$Hex)
 ## now plot again with colors proportional to normalized multivariate probability
 pVals <- as.numeric(cut(cn$climData$pVal[cn$climData$pa==1],nrow(ramp)))
 plot(cwd)
-points(cd[cd$pa==1,c('longitude','latitude')],pch=19,col=ramp$Hex[pVals])
+points(cn$climData[cn$climData$pa==1,c('longitude','latitude')],pch=19,col=ramp$Hex[pVals])
 
+pVals <- as.numeric(cut(cn$climData$mnScaledProb[cn$climData$pa==1],nrow(ramp)))
 plot(cwd)
-points(cd[cd$pa>=0,c('longitude','latitude')],pch=1,col=ramp$Hex[pVals])
+points(cn$climData[cn$climData$pa==1,c('longitude','latitude')],pch=19,col=ramp$Hex[pVals])
 
-## NOW add species distribution modeling to calculate climatic optima
-head(cd)
-source('scripts/paSDM.R')
+# show suitability values for all presence and absence points
+pVals <- as.numeric(cut(cn$climData$pVal[cn$climData$pa>=0],nrow(ramp)))
+plot(cwd)
+points(cn$climData[cn$climData$pa>=0,c('longitude','latitude')],pch=19,cex=0.25,col=ramp$Hex[pVals])
 
-glmRes <- pasdm(cd,st)
-cd2 <- glmRes[[1]]
-nd <- glmRes[[2]]
-mpt <- glmRes[[3]]
-mat <- glmRes[[4]]
-opt <- glmRes[[5]]
 
-# plot(cd2[,4:5])
-# points(cd[,4:5],pch=1,col='red')
-# plot(pa~pVal,data=cd2)
 
-plot(cd2[,4:5],xlim=c(0,max(nd$aet)),ylim=c(0,max(nd$cwd)))
-points(cd[,4:5],pch=19,col='red')
-points(cd2[mpt,4:5],pch=19,col='blue',cex=2)
-points(nd[opt,1:2],pch=19,col='green',cex=2)
-
-cn$climStats$mpt <- as.numeric(cd2[mpt,4:5])
-cn$climStats$mat <- as.numeric(cd2[mat,4:5])
-cn$climStats$opt <- as.numeric(nd[opt,1:2])
-
-cn$climStats
-
-# now try maxent
-head(cd)
-dim(cd)
-
-aetr <- raster('data/gis_data/CAaet.tiff')
-cwdr <- raster('data/gis_data/CAcwd.tiff')
-str <- stack(aetr,cwdr)
-
-mx <- maxent(str,cd[,2:3])
-mx
-str(mx)
-plot(mx)
-head(mx@presence)
-head(mx@absence)
