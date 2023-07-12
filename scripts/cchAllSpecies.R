@@ -8,8 +8,9 @@ source('scripts/prepareSpData.R')
 # read in climate data using terra functions, and create stack
 aet <- rast('data/gis_data/CAaet.tiff')
 cwd <- rast('data/gis_data/CAcwd.tiff')
-rastS <- c(aet,cwd)
-names(rastS) <- c('aet','cwd')
+tmn <- rast('data/gis_data/CAtmn.tiff')
+rastS <- c(aet,cwd,tmn)
+names(rastS) <- c('aet','cwd','tmn')
 nlr <- nlyr(rastS)
 
 # also create raster class stack for maxent
@@ -50,14 +51,17 @@ for (i in 1:length(allSpecies)) {
     if (i==1) {
       aetAll <- data.frame(name=selSp,cn$climStats[1,])
       cwdAll <- data.frame(name=selSp,cn$climStats[2,])
+      tmnAll <- data.frame(name=selSp,cn$climStats[3,])
     } else {
       aetAll <- rbind(aetAll,data.frame(name=selSp,cn$climStats[1,]))
       cwdAll <- rbind(cwdAll,data.frame(name=selSp,cn$climStats[2,]))
+      tmnAll <- rbind(tmnAll,data.frame(name=selSp,cn$climStats[3,]))
     }
   }
 }
 head(aetAll)
 head(cwdAll)
+dim(aetAll)
 
 pairs(aetAll[,c('mean','wtd.mean','chc','pwt.mean','mpt','mat','opt')])
 
