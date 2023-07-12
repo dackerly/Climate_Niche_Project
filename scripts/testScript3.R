@@ -7,17 +7,11 @@ source('scripts/climNiche3.R')
 # read in climate data using terra functions, and create stack
 aet <- rast('data/gis_data/CAaet.tiff')
 cwd <- rast('data/gis_data/CAcwd.tiff')
-st <- c(aet,cwd);names(st) <- c('aet','cwd')
+rastS <- c(aet,cwd)
+names(rastS) <- c('aet','cwd')
 
 # also create raster class stack for maxent
-str <- stack(st)
-
-rangeExtend <- function(x,extAmount=0.5) {
-  rx <- range(x)
-  rx[1] <- rx[1]-extAmount
-  rx[2] <- rx[2]+extAmount
-  return(rx)
-}
+rasterS <- stack(rastS)
 
 # read in CA plant biodiversity database
 cch <- readRDS('big_data/CCH_clean_data/California_Species_clean_All_epsg_3310.Rdata')
@@ -78,12 +72,11 @@ cd <- rbind(cd,nd)
 table(cd$name)
 tail(cd)
 
-# fit a glm to the presence data, against pseudoabsence
 # add quadratic values
 cd$aet2 <- cd$aet^2
 cd$cwd2 <- cd$cwd^2
 
-# fit logistic
+# fit a glm to the presence data, against pseudoabsence
 glm.fit <- glm(pa~aet+cwd+aet2+cwd2+aet:cwd,data=cd[cd$pa %in% c(0,1),],family='binomial')
 glm.fit
 

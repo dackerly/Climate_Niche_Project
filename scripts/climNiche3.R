@@ -85,18 +85,37 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
   if (length(a)>0) {
     cn$climStats$wtd.mean <- NA
     i=1
-    for (i in 1:nClim) {
-      hClim <- hist(cd[pa,vCols[i]],breaks=20,plot=F)
-      vals <- sort(cd[p,vCols[i]])
-      if (trunc>0) {
-        if (floor(length(vals)*trunc/2) < 1) tmp <- 1 else tmp <- floor(length(vals)*trunc/2)
-        lt <- 1:tmp
-        ut <- length(vals)+1-lt
-        vals <- vals[-c(lt,ut)]
+    if (FALSE) {   # histogram based wtd mean 
+      for (i in 1:nClim) {
+        hClim <- hist(cd[pa,vCols[i]],breaks=20,plot=F)
+        vals <- sort(cd[p,vCols[i]])
+        if (trunc>0) {
+          if (floor(length(vals)*trunc/2) < 1) tmp <- 1 else tmp <- floor(length(vals)*trunc/2)
+          lt <- 1:tmp
+          ut <- length(vals)+1-lt
+          vals <- vals[-c(lt,ut)]
+        }
+        
+        oClim <- hist(vals,breaks=hClim$breaks,plot=F)
+        cn$climStats$wtd.mean[i] <- weighted.mean(hClim$mids,oClim$counts/hClim$counts)
       }
-      
-      oClim <- hist(vals,breaks=hClim$breaks,plot=F)
-      cn$climStats$wtd.mean[i] <- weighted.mean(hClim$mids,oClim$counts/hClim$counts)
+      if (TRUE) {
+        for (i in 1:nClim) {
+          mn <- min(cd[pa,vCols[i]],na.rm=T)
+          mx <- max(cd[pa,vCols[i]],na.rm=T)
+          hDen <- density(cd[a,vCols[i]],from=mn,to=mx)
+          vals <- sort(cd[p,vCols[i]])
+          if (trunc>0) {
+            if (floor(length(vals)*trunc/2) < 1) tmp <- 1 else tmp <- floor(length(vals)*trunc/2)
+            lt <- 1:tmp
+            ut <- length(vals)+1-lt
+            vals <- vals[-c(lt,ut)]
+          }
+          oDen <- density(vals,from=mn,to=mx)
+          finDat <- which(is.finite(oDen$y/hDen$y))
+          cn$climStats$wtd.mean[i] <- weighted.mean(hDen$x[finDat],oDen$y[finDat]/hDen$y[finDat])
+        }
+      }
     }
   }
   
@@ -111,16 +130,20 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
   # model fit
   if (!is.null(model)) {
     cn$climStats$pwt.mean <- NA
-    cd$pVal <- predict(model,cd)
+    cd$pVal <- predict(model,cd,type='response')
     for (i in 1:nClim) cn$climStats$pwt.mean[i] <- stats::weighted.mean(cd[p,vCols[i]],cd$pVal[p])
     mpt <- which.max(cd$pVal[p])
     cn$climStats$mpt <- as.numeric(cd[p[mpt],vCols])
     if (length(a)>0) {
       mat <- which.max(cd$pVal[pa])
+      mat.eq <- which(cd$pVal[pa]==cd$pVal[pa[mat]])
+      if (length(mat.eq)>1) mat <- which.max(cd$mnScaledProb[pa[mat.eq]])
       cn$climStats$mat <- as.numeric(cd[pa[mat],vCols])
     }
     if (length(e)>0) {
       opt <- which.max(cd$pVal[e])
+      opt.eq <- which(cd$pVal[e]==cd$pVal[e[opt]])
+      if (length(opt.eq)>1) opt <- which.max(cd$mnScaledProb[e[opt.eq]])
       cn$climStats$opt <- as.numeric(cd[e[opt],vCols])
     }
   }
