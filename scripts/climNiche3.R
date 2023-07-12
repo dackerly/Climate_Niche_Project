@@ -84,7 +84,7 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
   
   if (length(a)>0) {
     cn$climStats$wtd.mean <- NA
-    i=1
+    i=2
     if (FALSE) {   # histogram based wtd mean 
       for (i in 1:nClim) {
         hClim <- hist(cd[pa,vCols[i]],breaks=20,plot=F)
@@ -99,22 +99,22 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
         oClim <- hist(vals,breaks=hClim$breaks,plot=F)
         cn$climStats$wtd.mean[i] <- weighted.mean(hClim$mids,oClim$counts/hClim$counts)
       }
-      if (TRUE) {
-        for (i in 1:nClim) {
-          mn <- min(cd[pa,vCols[i]],na.rm=T)
-          mx <- max(cd[pa,vCols[i]],na.rm=T)
-          hDen <- density(cd[a,vCols[i]],from=mn,to=mx)
-          vals <- sort(cd[p,vCols[i]])
-          if (trunc>0) {
-            if (floor(length(vals)*trunc/2) < 1) tmp <- 1 else tmp <- floor(length(vals)*trunc/2)
-            lt <- 1:tmp
-            ut <- length(vals)+1-lt
-            vals <- vals[-c(lt,ut)]
-          }
-          oDen <- density(vals,from=mn,to=mx)
-          finDat <- which(is.finite(oDen$y/hDen$y))
-          cn$climStats$wtd.mean[i] <- weighted.mean(hDen$x[finDat],oDen$y[finDat]/hDen$y[finDat])
+    }
+    if (TRUE) {
+      for (i in 1:nClim) {
+        mn <- min(cd[pa,vCols[i]],na.rm=T)
+        mx <- max(cd[pa,vCols[i]],na.rm=T)
+        hDen <- density(cd[a,vCols[i]],from=mn,to=mx)
+        vals <- sort(cd[p,vCols[i]])
+        if (trunc>0) {
+          if (floor(length(vals)*trunc/2) < 1) tmp <- 1 else tmp <- floor(length(vals)*trunc/2)
+          lt <- 1:tmp
+          ut <- length(vals)+1-lt
+          vals <- vals[-c(lt,ut)]
         }
+        oDen <- density(vals,from=mn,to=mx)
+        finDat <- which(is.finite(oDen$y/hDen$y))
+        cn$climStats$wtd.mean[i] <- weighted.mean(hDen$x[finDat],oDen$y[finDat]/hDen$y[finDat])
       }
     }
   }
@@ -131,19 +131,30 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
   if (!is.null(model)) {
     cn$climStats$pwt.mean <- NA
     cd$pVal <- predict(model,cd,type='response')
+    
+    # calculate weighted mean of the observed climate values, weighted by the predicted value from the model
     for (i in 1:nClim) cn$climStats$pwt.mean[i] <- stats::weighted.mean(cd[p,vCols[i]],cd$pVal[p])
+    
+    # find the presence point with the highest predicted value, and assign the climate values to mpt. If there is more than one that's identical, choose the one that is closest to the bivariate mean.
     mpt <- which.max(cd$pVal[p])
     cn$climStats$mpt <- as.numeric(cd[p[mpt],vCols])
+    mpt.eq <- which(cd$pVal[p]==cd$pVal[p[mpt]])
+    if (length(mpt.eq)>1) mpt <- mpt.eq[which.max(cd$mnScaledProb[p[mpt.eq]])]
+    cn$climStats$mpt <- as.numeric(cd[pa[mpt],vCols])
+    
+    # if user has supplied absences, find the point within the union of presence and absences with highest predicted value. Same as above if there are multiple points with equivalent maximum predicted values. 
     if (length(a)>0) {
       mat <- which.max(cd$pVal[pa])
       mat.eq <- which(cd$pVal[pa]==cd$pVal[pa[mat]])
-      if (length(mat.eq)>1) mat <- which.max(cd$mnScaledProb[pa[mat.eq]])
+      if (length(mat.eq)>1) mat <- mat.eq[which.max(cd$mnScaledProb[pa[mat.eq]])]
       cn$climStats$mat <- as.numeric(cd[pa[mat],vCols])
     }
+    
+    # if user has supplied a gridded environment (or other env values), find the point with highest predicted value. Same as above if there are multiple points with equivalent maximum predicted values.  
     if (length(e)>0) {
       opt <- which.max(cd$pVal[e])
       opt.eq <- which(cd$pVal[e]==cd$pVal[e[opt]])
-      if (length(opt.eq)>1) opt <- which.max(cd$mnScaledProb[e[opt.eq]])
+      if (length(opt.eq)>1) mat <- opt.eq[which.max(cd$mnScaledProb[pa[opt.eq]])]
       cn$climStats$opt <- as.numeric(cd[e[opt],vCols])
     }
   }
