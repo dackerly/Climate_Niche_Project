@@ -28,7 +28,7 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
   cd <- cd[apply(cd[,vCols],1,allFinite),]
   
   # set up data frame for descriptive stats, as first object in cn results list
-  cn[[1]] <- data.frame(climVar=climVarNames,mean=NA,sd=NA,q05=NA,median=NA,q95=NA,min=NA,max=NA)
+  cn[[1]] <- data.frame(climVar=climVarNames,N=NA,mean=NA,sd=NA,q05=NA,median=NA,q95=NA,min=NA,max=NA)
   names(cn) <- 'climStats'
   
   # p is rows for presence data
@@ -50,6 +50,7 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
     cd <- cbind(cd,zs)
     names(cd)[length(names(cd))] <- zCol
     
+    cn$climStats$N[i] <- length(p)
     cn$climStats$mean[i] <- mean(cd[p,cc],na.rm=T)
     cn$climStats$sd[i] <- sd(cd[p,cc],na.rm=T)
     cn$climStats$q05[i] <- quantile(cd[p,cc],probs=0.05,na.rm=T)
@@ -118,14 +119,7 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
       }
     }
   }
-  
-  # convex hull centroid
-  sv <- vect(as.matrix(cd[p,vCols]),type='points')
-  #plot(sv)
-  ch <- convHull(sv)
-  #lines(ch)
-  cc <- centroids(ch)
-  cn$climStats$chc <- ext(cc)[c(1,3)]
+
   
   # model fit
   if (!is.null(model)) {
@@ -158,6 +152,15 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
       cn$climStats$opt <- as.numeric(cd[e[opt],vCols])
     }
   }
+  
+  # convex hull centroid
+  sv <- vect(as.matrix(cd[p,vCols]),type='points')
+  #plot(sv)
+  ch <- convHull(sv)
+  #lines(ch)
+  cc <- centroids(ch)
+  cn$climStats$chc <- ext(cc)[c(1,3)]
+  
   # add updated climate data to cn object
   cn[[4]] <- cd
   names(cn)[4] <- 'climData'
