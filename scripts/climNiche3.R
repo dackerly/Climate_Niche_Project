@@ -22,13 +22,16 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
   climVarNames <- names(cd)[vCols]
   nClim <- length(climVarNames)
   
+  nameList <- names(table(cd$name))
+  if ('TrAb' %in% nameList | 'Absence' %in% nameList) trueAbs <- T else trueAbs <- F
+  
   #remove records with incomplete climate data in any variable; only multivariate complete records are used for all calculations. Rownames created so that returned cd object shows which rows were included
   row.names(cd) <- 1:nrow(cd)
   allFinite <- function(x) all(is.finite(x))
   cd <- cd[apply(cd[,vCols],1,allFinite),]
   
   # set up data frame for descriptive stats, as first object in cn results list
-  cn[[1]] <- data.frame(climVar=climVarNames,N=NA,mean=NA,sd=NA,q05=NA,median=NA,q95=NA,min=NA,max=NA)
+  cn[[1]] <- data.frame(climVar=climVarNames,N=NA,pmn=NA,sd=NA,q05=NA,pmd=NA,q95=NA,min=NA,max=NA)
   names(cn) <- 'climStats'
   
   # p is rows for presence data
@@ -51,10 +54,10 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
     names(cd)[length(names(cd))] <- zCol
     
     cn$climStats$N[i] <- length(p)
-    cn$climStats$mean[i] <- mean(cd[p,cc],na.rm=T)
+    cn$climStats$pmn[i] <- mean(cd[p,cc],na.rm=T)
     cn$climStats$sd[i] <- sd(cd[p,cc],na.rm=T)
     cn$climStats$q05[i] <- quantile(cd[p,cc],probs=0.05,na.rm=T)
-    cn$climStats$median[i] <- quantile(cd[p,cc],probs=0.50,na.rm=T)
+    cn$climStats$pmd[i] <- quantile(cd[p,cc],probs=0.50,na.rm=T)
     cn$climStats$q95[i] <- quantile(cd[p,cc],probs=0.95,na.rm=T)
     cn$climStats$min[i] <- min(cd[p,cc],na.rm=T)
     cn$climStats$max[i] <- max(cd[p,cc],na.rm=T)
@@ -84,7 +87,7 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
   # if trunc>0, then truncate the requested proportion of records from either end of the climate values distribution. This is provided because one or a few extreme values that may fall in very rare climate types can skew the mean value a lot. Compare results with trunc=0 and trunc=0.01 or 0.05 to see the effect
   
   if (length(a)>0) {
-    cn$climStats$wtd.mean <- NA
+    cn$climStats$wtm <- NA
     i=2
     if (FALSE) {   # histogram based wtd mean 
       for (i in 1:nClim) {
@@ -98,14 +101,16 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
         }
         
         oClim <- hist(vals,breaks=hClim$breaks,plot=F)
-        cn$climStats$wtd.mean[i] <- weighted.mean(hClim$mids,oClim$counts/hClim$counts)
+        cn$climStats$wtm[i] <- weighted.mean(hClim$mids,oClim$counts/hClim$counts)
       }
     }
     if (TRUE) {
       for (i in 1:nClim) {
         mn <- min(cd[pa,vCols[i]],na.rm=T)
         mx <- max(cd[pa,vCols[i]],na.rm=T)
-        hDen <- density(cd[a,vCols[i]],from=mn,to=mx)
+       
+        if (trueAbs) hDen <- density(cd[pa,vCols[i]],from=mn,to=mx) else hDen <- density(cd[a,vCols[i]],from=mn,to=mx)
+        
         vals <- sort(cd[p,vCols[i]])
         if (trunc>0) {
           if (floor(length(vals)*trunc/2) < 1) tmp <- 1 else tmp <- floor(length(vals)*trunc/2)
@@ -115,7 +120,7 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
         }
         oDen <- density(vals,from=mn,to=mx)
         finDat <- which(is.finite(oDen$y/hDen$y))
-        cn$climStats$wtd.mean[i] <- weighted.mean(hDen$x[finDat],oDen$y[finDat]/hDen$y[finDat])
+        cn$climStats$wtm[i] <- weighted.mean(hDen$x[finDat],oDen$y[finDat]/hDen$y[finDat])
       }
     }
   }
@@ -123,11 +128,11 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
   
   # model fit
   if (!is.null(model)) {
-    cn$climStats$pwt.mean <- NA
+    cn$climStats$mwm <- NA
     cd$pVal <- predict(model,cd,type='response')
     
     # calculate weighted mean of the observed climate values, weighted by the predicted value from the model
-    for (i in 1:nClim) cn$climStats$pwt.mean[i] <- stats::weighted.mean(cd[p,vCols[i]],cd$pVal[p])
+    for (i in 1:nClim) cn$climStats$mwm[i] <- stats::weighted.mean(cd[p,vCols[i]],cd$pVal[p])
     
     # find the presence point with the highest predicted value, and assign the climate values to mpt. If there is more than one that's identical, choose the one that is closest to the bivariate mean.
     mpt <- which.max(cd$pVal[p])
@@ -148,7 +153,7 @@ climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
     if (length(e)>0) {
       opt <- which.max(cd$pVal[e])
       opt.eq <- which(cd$pVal[e]==cd$pVal[e[opt]])
-      if (length(opt.eq)>1) mat <- opt.eq[which.max(cd$mnScaledProb[pa[opt.eq]])]
+      if (length(opt.eq)>1) mat <- opt.eq[which.max(cd$mnScaledProb[e[opt.eq]])]
       cn$climStats$opt <- as.numeric(cd[e[opt],vCols])
     }
   }

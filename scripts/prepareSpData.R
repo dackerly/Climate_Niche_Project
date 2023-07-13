@@ -20,6 +20,7 @@ prepareSpData <- function(id=NULL,spName=NULL,rst=NULL,npa=10000,psa.source=c('i
   
   ## input data.frame should have 3 columns
   # c1: species name
+  # c2 (optional): pa - presence/absence
   # c3-4: longitude/latitude
   # can be large data set with other species if these are being used as the background data; or just the selected species if background data will be sampled from raster
   
@@ -28,7 +29,10 @@ prepareSpData <- function(id=NULL,spName=NULL,rst=NULL,npa=10000,psa.source=c('i
   id <- id.all[id.all$name==spName,]
   
   # add presence/absence column, with presences
-  id$pa <- 1
+  nameList <- names(table(id.all$name))
+  if ('TrAb' %in% nameList | 'Absence' %in% nameList) trueAbs <- T else trueAbs <- F
+  
+  if (!trueAbs) id$pa <- 1
   id$name <- as.character(id$name)
   id$longitude <- as.numeric(id$longitude)
   id$latitude <- as.numeric(id$latitude)
@@ -47,18 +51,19 @@ prepareSpData <- function(id=NULL,spName=NULL,rst=NULL,npa=10000,psa.source=c('i
   }
   
   # add pseudoabsence values, sampled in this case from CCH to reflect sampling bias
-  if (npa>0) {
-    if (psa.source=='id') {
-      rsamp <- sample(1:nrow(id.all),npa)
-      psa <- data.frame(name=rep('PsAb',npa),pa=0,longitude=id.all[rsamp,'longitude'],latitude=id.all[rsamp,'latitude'])
-      if (verbose) print(head(psa))
-    } else {
-      ll <- xyFromCell(rst,cells(rst))
-      rsamp <- sample(1:nrow(ll),npa)
-      psa <- data.frame(name=rep('PsAb',npa),pa=0,longitude=ll[rsamp,1],latitude=ll[rsamp,2])
+  if (!trueAbs) 
+    if (npa>0) {
+      if (psa.source=='id') {
+        rsamp <- sample(1:nrow(id.all),npa)
+        psa <- data.frame(name=rep('PsAb',npa),pa=0,longitude=id.all[rsamp,'longitude'],latitude=id.all[rsamp,'latitude'])
+        if (verbose) print(head(psa))
+      } else {
+        ll <- xyFromCell(rst,cells(rst))
+        rsamp <- sample(1:nrow(ll),npa)
+        psa <- data.frame(name=rep('PsAb',npa),pa=0,longitude=ll[rsamp,1],latitude=ll[rsamp,2])
+      }
+      id <- rbind(id,psa)
     }
-    id <- rbind(id,psa)
-  }
   if (verbose) {
     print(head(id))
     print(tail(id))

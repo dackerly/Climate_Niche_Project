@@ -49,7 +49,7 @@ write.csv(cd,'data/test_data/expanded_test_data.csv')
 
 ### CALCULATE CLIMATE NICHE STATISTICS
 source('scripts/climNiche3.R')
-cn <- climNiche3(cd,vCols=5:6,trunc=0.01,model=mx.fit)
+cn <- climNiche3(cd,trunc=0.01,vCols=5:6,model=glm.fit)
 cn$climStats
 cnd <- cn$climData
 

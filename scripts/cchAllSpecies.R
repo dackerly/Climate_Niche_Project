@@ -9,8 +9,8 @@ source('scripts/prepareSpData.R')
 aet <- rast('data/gis_data/CAaet.tiff')
 cwd <- rast('data/gis_data/CAcwd.tiff')
 tmn <- rast('data/gis_data/CAtmn.tiff')
-rastS <- c(aet,cwd,tmn)
-names(rastS) <- c('aet','cwd','tmn')
+rastS <- c(aet,cwd)
+names(rastS) <- c('aet','cwd')
 nlr <- nlyr(rastS)
 
 # also create raster class stack for maxent
@@ -22,6 +22,7 @@ cch$current_name_binomial <- as.character(cch$current_name_binomial)
 names(cch)
 
 allSpecies <- sort(unique(cch$current_name_binomial))
+#allSpecies <- allSpecies[1:10]
 #quercus <- grep('Quercus',allSpecies)
 #allSpecies <- allSpecies[quercus]
 
@@ -51,16 +52,17 @@ for (i in 1:length(allSpecies)) {
     if (i==1) {
       aetAll <- data.frame(name=selSp,cn$climStats[1,])
       cwdAll <- data.frame(name=selSp,cn$climStats[2,])
-      tmnAll <- data.frame(name=selSp,cn$climStats[3,])
+      #tmnAll <- data.frame(name=selSp,cn$climStats[3,])
     } else {
       aetAll <- rbind(aetAll,data.frame(name=selSp,cn$climStats[1,]))
       cwdAll <- rbind(cwdAll,data.frame(name=selSp,cn$climStats[2,]))
-      tmnAll <- rbind(tmnAll,data.frame(name=selSp,cn$climStats[3,]))
+      #tmnAll <- rbind(tmnAll,data.frame(name=selSp,cn$climStats[3,]))
     }
   }
 }
 head(aetAll)
 head(cwdAll)
+#head(tmnAll)
 dim(aetAll)
 
 pairs(aetAll[,c('mean','wtd.mean','chc','pwt.mean','mpt','mat','opt')])
@@ -68,4 +70,7 @@ pairs(aetAll[,c('mean','wtd.mean','chc','pwt.mean','mpt','mat','opt')])
 names(aetAll)
 mvar <- 14
 plot(aetAll[,mvar],cwdAll[,mvar])
+#plot(aetAll[,mvar],tmnAll[,mvar])
 
+write.csv(aetAll,'results/cchAET.csv')
+write.csv(cwdAll,'results/cchCWD.csv')
