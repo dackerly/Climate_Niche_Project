@@ -7,11 +7,12 @@ require('terra')
 #cd <- read.csv('data/test_data/expanded_test_data.csv',row.names = 1)
 
 # cd is a point data set of climate data for a species
-# col1: species name
+# col1: species name for pa=1; Absence/TrAb or PsAb for pa=0 (former indicate true absences, and must be specified with these exact names for function to correctly identify them); GriddedEnv or other value for pa=-1
 # col2: presence/absence (and -1 for GriddedEnv)
 # col3-5: latitude,longitude (in any units)
 # col5+: optional - climate data (any number of variables)
 #   variable names must match variable in fit model object if predicted values desired
+
 climNiche3 <- function(cd,vCols=NULL,trunc=0,comp.cases=T,model=NULL) {
   # set up empty list to capture results
   cn <- list()
