@@ -35,9 +35,9 @@ i=1
 for (i in 1:100) {
   simD <- simDist(rast=rastS,mnR=rVz,varR=rVar,covR=rCov,maxPts=5000)
   simD$means
-  plot(simD$ras)
-  
   dVal <- values(simD$ras)
+  plot(simD$ras)
+
   #table(dVal,useNA = 'always')
   spname <- 'sim1'
   ll.vals <- xyFromCell(aet,1:length(values(aet)))
