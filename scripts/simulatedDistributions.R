@@ -35,9 +35,9 @@ i=1
 for (i in 1:100) {
   simD <- simDist(rast=rastS,mnR=rVz,varR=rVar,covR=rCov,maxPts=5000)
   simD$means
-  dVal <- values(simD$ras)
   plot(simD$ras)
 
+  dVal <- values(simD$ras)
   #table(dVal,useNA = 'always')
   spname <- 'sim1'
   ll.vals <- xyFromCell(aet,1:length(values(aet)))
@@ -70,8 +70,14 @@ for (i in 1:100) {
   }
 }
 aetVals
+
 plot(simMns~mpt,data=aetVals);abline(0,1)
 plot(simMns~mat,data=aetVals);abline(0,1)
 plot(simMns~opt,data=aetVals);abline(0,1)
 plot(simMns~pmn,data=aetVals);abline(0,1)
 plot(mpt~pmn,data=aetVals);abline(0,1)
+
+op=par(mfrow=c(1,2),mar=c(4,4,1,1))
+plot(mpt~simMns,data=aetVals,xlab='True mean',ylab='MPT: Climate at max suitability');abline(0,1)
+plot(pmn~simMns,data=aetVals,xlab='True mean',ylab='PMN: Mean of presence points');abline(0,1)
+par(op)

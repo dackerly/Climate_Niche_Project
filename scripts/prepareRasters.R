@@ -14,8 +14,9 @@ extFromVect <- function(x) {
 
 aet <- rast('big_data/CHELSA_climate/CHELSA_annual_AET_1979_2013.tiff')
 cwd <- rast('big_data/CHELSA_climate/CHELSA_annual_CWD_1979_2013.tiff')
-tmin <- rast('big_data/CHELSA_climate/CHELSA_tmin10_01_1979-2013_V1.2_land.tif')
-plot(tmin)
+tav <- rast('big_data/CHELSA_climate/CHELSA_bio10_01.tiff')
+ppt <- rast('big_data/CHELSA_climate/CHELSA_bio10_12.tiff')
+plot(tav)
 ext(aet)
 
 CA <- vect("data/gis_data/LatLong/CA.shp")
@@ -24,10 +25,10 @@ CAext <- ext(extFromVect(CA))
 crs(cwd)
 crs(CA) <- crs(cwd)
 
-tmn <- crop(tmin,CAext)
-tmn <- mask(tmn,CA)
-tmn <- tmn/10
-plot(tmn)
+tav <- crop(tav,CAext)
+tav <- mask(tav,CA)
+tav <- tav/10
+plot(tav)
 plot(CA,add=T)
 
 cwd <- crop(cwd,CAext)
@@ -40,6 +41,22 @@ aet <- mask(aet,CA)
 plot(aet)
 plot(CA,add=T)
 
-writeRaster(cwd,'data/gis_data/CAcwd.tiff')
-writeRaster(aet,'data/gis_data/CAaet.tiff')
-writeRaster(tmn,'data/gis_data/CAtmn.tiff')
+ppt <- crop(ppt,CAext)
+ppt <- mask(ppt,CA)
+plot(ppt)
+plot(CA,add=T)
+
+writeRaster(cwd,'data/gis_data/CAcwd.tiff',overwrite=T)
+writeRaster(aet,'data/gis_data/CAaet.tiff',overwrite=T)
+writeRaster(tav,'data/gis_data/CAtav.tiff',overwrite=T)
+writeRaster(ppt,'data/gis_data/CAppt.tiff',overwrite=T)
+
+CAs <- c(tav,cwd,aet,ppt)
+CAv <- data.frame(values(CAs))
+names(CAv) <- c('tav','cwd','aet','ppt')
+sel <- which(complete.cases(CAv))
+CAv <- CAv[sel,]
+head(CAv)
+
+rsamp <- sample(1:nrow(CAv),1000)
+pairs(CAv[rsamp,])
