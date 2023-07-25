@@ -55,6 +55,7 @@ dim(CAcv)
 
 rsamp <- sample(1:nrow(cv),20000)
 #pairs(cv[rsamp,])
+par(mar=c(5,5,1,1))
 plot(aet~cwd,data=cv[rsamp,])
 points(aet~cwd,data=CAcv,pch=1,col='blue')
 

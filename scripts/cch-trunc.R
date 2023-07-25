@@ -8,12 +8,13 @@ source('scripts/prepareSpData.R')
 aet <- rast('data/gis_data/CAaet.tiff')
 cwd <- rast('data/gis_data/CAcwd.tiff')
 tmn <- rast('data/gis_data/CAtmn.tiff')
-rastS <- c(aet,cwd)
-names(rastS) <- c('aet','cwd')
+rastS <- c(cwd,aet)
+names(rastS) <- c('cwd','aet')
 nlr <- nlyr(rastS)
 
 # also create raster class stack for maxent
 rasterS <- stack(rastS)
+plot(rastS)
 
 # read in CA plant biodiversity database
 cch <- readRDS('big_data/CCH_clean_data/California_Species_clean_All_epsg_3310.Rdata')
@@ -23,27 +24,55 @@ names(cch)
 cval.all <- data.frame(values(rastS))
 cval <- cval.all[which(complete.cases(cval.all)),]
 dim(cval)
-rsamp <- sample(1:nrow(cval),20000)
+rsamp <- sample(1:nrow(cval),50000)
 cvch <- terra::convHull(cval)
 
+# insert alpha hull and contour density
+
+# extract climate for cch
 cch$aet <- extract(aet,cch[,c('longitude','latitude')])[,2]
 cch$cwd <- extract(cwd,cch[,c('longitude','latitude')])[,2]
 vCols <- c(which(names(cch)=='aet'),which(names(cch)=='cwd'))
 
-sp <- 'Quercus douglasii'
+sp <- 'Sequoia sempervirens'
 spr <- which(cch$current_name_binomial==sp)
 #spr <- spr[-153]
-spch <- terra::convHull(cch[spr,c('aet','cwd')])
+spch <- terra::convHull(cch[spr,c('cwd','aet')])
 head(cch[spr,])
 str(spch)
 length(spr)
 
-plot(cval[rsamp,],pch=19,cex=0.2)
+aetAll <- read.csv('results/cchAET.csv')
+cwdAll <- read.csv('results/cchCWD.csv')
+names(aetAll)
+nr <- which(aetAll$name==sp)
+aetAll[nr,]
+cwdAll[nr,]
+
+plot(cval[rsamp,],pch=19,cex=0.1,col='lightblue',xlim=c(0,2000))
 plot(cvch,add=T)
-points(cch$aet[spr],cch$cwd[spr],pch=19,cex=0.4,col='blue')
+points(cch$cwd[spr],cch$aet[spr],pch=19,cex=1,col='darkgreen')
 plot(spch,add=T,lwd=2)
+points(cwdAll$pmn[nr],aetAll$pmn[nr],cex=2,pch=19)
+points(cwdAll$mpt[nr],aetAll$mpt[nr],cex=2,pch=19,col='orange')
+
+
+op=par(mfrow=c(2,1))
+plot(aet)
+points(cch[spr,c('longitude','latitude')],cex=0.5,pch=19,col='darkgreen')
+# color ramp for cwd?
+plot(cwd)
+points(cch[spr,c('longitude','latitude')],cex=0.5,pch=19,col='darkgreen')
+par(op)
+
+par(mfrow=c(1,1))
+plot(cch$cwd[spr],cch$aet[spr],pch=19,cex=1,col='darkgreen')
+points(cwdAll$pmn[nr],aetAll$pmn[nr],cex=2,pch=19)
 
 sv <- vect(as.matrix(cch[spr,]),type='points')
 ch <- convHull(sv)
 
 summary(cval[,2])
+
+hist(cwdAll$sd)
+hist(aetAll$sd)
