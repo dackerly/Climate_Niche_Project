@@ -64,10 +64,12 @@ kdp <- function(x, # 2-column matrix used to fit kernel density model
 # demonstrate use of kernel density function
 cali <- cval[rsamp,]
 redwood <- cch[spr, c("cwd", "aet")]
+1 - mean(kdp(cali, redwood, p = 0.1)) # proportion of redwood occurrences that are outside the 90% CA climate space contour
 plot(cali, pch=19, cex=0.1, xlim=c(0,2000),
-     col=c("lightblue", "dodgerblue")[as.integer(kdp(cali))+1])
+     col=c("lightblue", "dodgerblue")[as.integer(kdp(cali, p = 0.1))+1])
 points(redwood, pch=19, cex=0.5, 
-       col=c("darkred", "tomato")[as.integer(kdp(cali, redwood))+1])
+       col=c("darkred", "tomato")[as.integer(kdp(cali, redwood, p = 0.1))+1])
+
 
 
 aetAll <- read.csv('results/cchAET.csv')
