@@ -1,6 +1,7 @@
 rm(list=ls())
 library('terra')
 library('dismo')
+library('fields')
 source('scripts/climNiche3.R')
 source('scripts/prepareSpData.R')
 
@@ -22,10 +23,16 @@ cch$current_name_binomial <- as.character(cch$current_name_binomial)
 names(cch)
 
 cval.all <- data.frame(values(rastS))
+dim(cval.all)
+xy <- xyFromCell(aet,1:nrow(cval.all))
+dim(xy)
+cval.all <- cbind(xy,cval.all)
+head(cval.all)
+
 cval <- cval.all[which(complete.cases(cval.all)),]
 dim(cval)
 rsamp <- sample(1:nrow(cval),50000)
-cvch <- terra::convHull(cval)
+cvch <- terra::convHull(cval[,3:4])
 
 # insert alpha hull and contour density
 
@@ -62,7 +69,7 @@ kdp <- function(x, # 2-column matrix used to fit kernel density model
 }
 
 # demonstrate use of kernel density function
-cali <- cval[rsamp,]
+cali <- cval[rsamp,3:4]
 redwood <- cch[spr, c("cwd", "aet")]
 1 - mean(kdp(cali, redwood, p = 0.1)) # proportion of redwood occurrences that are outside the 90% CA climate space contour
 plot(cali, pch=19, cex=0.1, xlim=c(0,2000),
@@ -70,7 +77,9 @@ plot(cali, pch=19, cex=0.1, xlim=c(0,2000),
 points(redwood, pch=19, cex=0.5, 
        col=c("darkred", "tomato")[as.integer(kdp(cali, redwood, p = 0.1))+1])
 
-
+# where are the 10% points?
+plot(cval[rsamp,1:2], pch=19, cex=0.1,
+     col=c("lightblue", "dodgerblue")[as.integer(kdp(cali, p = 0.1))+1])
 
 aetAll <- read.csv('results/cchAET.csv')
 cwdAll <- read.csv('results/cchCWD.csv')
