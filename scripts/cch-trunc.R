@@ -42,6 +42,34 @@ head(cch[spr,])
 str(spch)
 length(spr)
 
+
+# function returns T/F indicating whether each row of matrix x (or matrix y, if specified) 
+# has a kernel density higher than probability p, with respect to the rows of x
+kdp <- function(x, # 2-column matrix used to fit kernel density model
+                y = NULL, # optional matrix for which density is to be predicted; if not supplied, predictions are made for x
+                p = 0.05, # probability threshold 
+                ... # other arguments passed to MASS::kde2d
+){
+  kd <- MASS::kde2d(x[,1], x[,2], ...)
+  kdx <- fields::interp.surface(kd, x)
+  q <- quantile(kdx, p)
+  if(is.null(y)){
+    kdy <- kdx
+  } else {
+    kdy <- fields::interp.surface(kd, y)
+  }
+  kdy >= q
+}
+
+# demonstrate use of kernel density function
+cali <- cval[rsamp,]
+redwood <- cch[spr, c("cwd", "aet")]
+plot(cali, pch=19, cex=0.1, xlim=c(0,2000),
+     col=c("lightblue", "dodgerblue")[as.integer(kdp(cali))+1])
+points(redwood, pch=19, cex=0.5, 
+       col=c("darkred", "tomato")[as.integer(kdp(cali, redwood))+1])
+
+
 aetAll <- read.csv('results/cchAET.csv')
 cwdAll <- read.csv('results/cchCWD.csv')
 names(aetAll)
