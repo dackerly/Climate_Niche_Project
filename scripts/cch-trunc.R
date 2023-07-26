@@ -81,6 +81,45 @@ points(redwood, pch=19, cex=0.5,
 plot(cval[rsamp,1:2], pch=19, cex=0.1,
      col=c("lightblue", "dodgerblue")[as.integer(kdp(cali, p = 0.1))+1])
 
+
+# function to calculate distance to alpha hull
+alpha_dist <- function(x, # 2-column matrix used to define alpha hull
+                       y = NULL, # optional matrix for which hull distance is to be calculated; if not supplied, distances are calcualted for x
+                       alpha = 0.5 # radius of cookie cutter (in standard deviations of x)
+){
+  
+  # unique, scaled values
+  xs <- scale(x)
+  dupe <- duplicated(xs)
+  xu <- xs[!dupe,]
+  if(is.null(y)) y <- x
+  for(i in 1:2) y[,i] <- (y[,i] - mean(x[,i])) / sd(x[,i])
+  
+  # alpha hull
+  ah <- alphahull::ahull(xu, alpha = alpha)
+  
+  # point-hull distances
+  p <- as.data.frame(y)
+  coordinates(p) <- colnames(p)
+  source("https://raw.githubusercontent.com/matthewkling/range-edges/master/code/utilities.R")
+  sp <- ah2sp(ah)
+  as.vector(rgeos::gDistance(p, as(sp, "SpatialLines"), byid=T))
+}
+
+# demonstrate alpha_dist function with two different radii
+cal <- as.data.frame(cali)
+cal$alpha_0.5 <- alpha_dist(cali, alpha = .5)
+cal$alpha_0.05 <- alpha_dist(cali, alpha = .05)
+cal <- tidyr::gather(cal, alpha, edge_dist, alpha_0.05, alpha_0.5)
+ggplot(cal, aes(cwd, aet, color = edge_dist)) +
+  facet_wrap(~alpha) +
+  geom_point() +
+  scale_color_viridis_c()
+
+# show that hull can be fit to one data set and distance calculated for a second dataset
+rw_dist <- alpha_dist(cali, redwood, alpha = .5)
+
+
 aetAll <- read.csv('results/cchAET.csv')
 cwdAll <- read.csv('results/cchCWD.csv')
 names(aetAll)
