@@ -2,6 +2,10 @@ rm(list=ls())
 library('terra')
 library('dismo')
 library('fields')
+library('alphahull')
+library('maptools')
+library('rgeos')
+library('ggplot2')
 source('scripts/climNiche3.R')
 source('scripts/prepareSpData.R')
 
@@ -111,6 +115,7 @@ cal <- as.data.frame(cali)
 cal$alpha_0.5 <- alpha_dist(cali, alpha = .5)
 cal$alpha_0.05 <- alpha_dist(cali, alpha = .05)
 cal <- tidyr::gather(cal, alpha, edge_dist, alpha_0.05, alpha_0.5)
+str(cal)
 ggplot(cal, aes(cwd, aet, color = edge_dist)) +
   facet_wrap(~alpha) +
   geom_point() +
@@ -118,7 +123,7 @@ ggplot(cal, aes(cwd, aet, color = edge_dist)) +
 
 # show that hull can be fit to one data set and distance calculated for a second dataset
 rw_dist <- alpha_dist(cali, redwood, alpha = .5)
-
+str(cal)
 
 aetAll <- read.csv('results/cchAET.csv')
 cwdAll <- read.csv('results/cchCWD.csv')
