@@ -43,7 +43,9 @@ cvch <- terra::convHull(cval[,3:4])
 # extract climate for cch
 cch$aet <- extract(aet,cch[,c('longitude','latitude')])[,2]
 cch$cwd <- extract(cwd,cch[,c('longitude','latitude')])[,2]
-vCols <- c(which(names(cch)=='aet'),which(names(cch)=='cwd'))sp <- 'Sequoia sempervirens'
+vCols <- c(which(names(cch)=='aet'),which(names(cch)=='cwd'))
+
+sp <- 'Sequoia sempervirens'
 spr <- which(cch$current_name_binomial==sp)
 #spr <- spr[-153]
 spch <- terra::convHull(cch[spr,c('cwd','aet')])
@@ -51,6 +53,18 @@ head(cch[spr,])
 str(spch)
 length(spr)
 
+ccols <- read.csv('data/colorRamps/TBC3_color_ramps_combined.csv')
+op=par(mfrow=c(2,1))
+head(ccols)
+plot(cwd,col=paste('#',ccols$Hex[which(ccols$Factor=='CWD')],sep=''),main='Climatic water deficit (CWD, mm)')
+points(cch[spr,c('longitude','latitude')],pch=19,cex=0.5,col='darkred')
+plot(aet,main='Actual evapotranspiration (AET, mm)')
+points(cch[spr,c('longitude','latitude')],pch=19,cex=0.5,col='darkred')
+par(op)
+
+par(mfrow=c(1,1),mar=c(5,5,1,1))
+plot(cch[spr,c('cwd','aet')],pch=19,cex=1.5,col='darkred',xlab='CWD',ylab='AET',cex.lab=2)
+points(x=mean(cch[spr,'cwd'],na.rm=T),y=mean(cch[spr,'aet'],na.rm=T),cex=5,pch=19,col='black')
 
 # function returns T/F indicating whether each row of matrix x (or matrix y, if specified) 
 # has a kernel density higher than probability p, with respect to the rows of x
@@ -141,12 +155,26 @@ al <- cali$alpha_0.5
 rw <- rw_dist_0.5
 
 head(cali)
-plot(y~x,data=cali,col=c('lightblue','dodgerblue')[cut(al,breaks=c(min(al),quantile(al,0.9),max(al)))],asp=1)
+op=par(mfrow=c(1,2))
+plot(y~x,data=cali,col=c('lightblue','dodgerblue')[cut(al,breaks=c(min(al),quantile(al,0.1),max(al)))],asp=1,xlab='',ylab='')
+points(y~x,data=cali[which(al<quantile(al,0.1)),],col='lightblue',pch=19,cex=0.5)
+points(cch[spr,c('longitude','latitude')],pch=19,col='darkred',cex=0.75)
+
+plot(aet~cwd,data=cali,col=c('lightblue','dodgerblue')[cut(al,breaks=c(min(al),quantile(al,0.1),max(al)))],xlab='CWD (mm)',ylab='AET (mm)',cex.lab=2)
+points(aet~cwd,data=cali[which(al<quantile(al,0.1)),],col='lightblue',pch=19,cex=0.5)
+points(redwood,pch=19,col='darkred')
+
+plot(spch,add=T,lwd=2)
+points(cwdAll$pmn[nr],aetAll$pmn[nr],cex=3,pch=19)
+points(cwdAll$mpt[nr],aetAll$mpt[nr],cex=3,pch=19,col='orange')
+
+par(op)
 
 ## redwood example was helpful demo. Now do it for all species
 cch2 <- cch[which(complete.cases(cch[,c('cwd','aet')])),]
-cch2$alpha_dist_0.5 <- alpha_dist(cali[,3:4], cch2[,c('cwd','aet')], alpha = .5)
-saveRDS(cch2$alpha_dist_0.5,'data/cch2_alpha_dist_0.5')
+#cch2$alpha_dist_0.5 <- alpha_dist(cali[,3:4], cch2[,c('cwd','aet')], alpha = .5)
+#saveRDS(cch2$alpha_dist_0.5,'data/cch2_alpha_dist_0.5')
+cch2$alpha_dist_0.5 <- readRDS('data/cch2_alpha_dist_0.5')
 
 allSp <- sort(unique(cch2$current_name_binomial))
 spMar <- data.frame(name=allSp,N=NA,Nm_0.1=NA)
@@ -183,12 +211,16 @@ nr <- which(aetAll$name==sp)
 aetAll[nr,]
 cwdAll[nr,]
 
-plot(cval[rsamp,],pch=19,cex=0.1,col='lightblue',xlim=c(0,2000))
+aetAll$Pm_0.1 <- spMar$Pm_0.1[match(aetAll$name,spMar$name)]
+plot(aetAll$Pm_0.1,(aetAll$pmn-aetAll$mpt))
+
+plot(cval[rsamp,3:4],pch=19,cex=0.1,col='lightblue',xlim=c(0,2000),xlab='CWD (mm)',ylab='AET (mm)',cex.lab=2)
 plot(cvch,add=T)
-points(cch$cwd[spr],cch$aet[spr],pch=19,cex=1,col='darkgreen')
+points(cch$cwd[spr],cch$aet[spr],pch=19,cex=1,col='darkred')
+
 plot(spch,add=T,lwd=2)
-points(cwdAll$pmn[nr],aetAll$pmn[nr],cex=2,pch=19)
-points(cwdAll$mpt[nr],aetAll$mpt[nr],cex=2,pch=19,col='orange')
+points(cwdAll$pmn[nr],aetAll$pmn[nr],cex=3,pch=19)
+points(cwdAll$mpt[nr],aetAll$mpt[nr],cex=3,pch=19,col='orange')
 
 
 op=par(mfrow=c(2,1))
