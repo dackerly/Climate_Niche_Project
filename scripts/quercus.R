@@ -33,15 +33,16 @@ for (i in 1:length(nct)) {
 }
 
 {
-  op=par(mfrow=c(2,3)) 
-  nct <- c(5,15,17)
+  op=par(mfrow=c(2,2),mar=c(5,5,2,2)) 
+  nct <- c(5,15)
   # -15 removes Q. pacifica outlier
+  i=1
   for (i in 1:length(nct)) {
     mvar <- nct[i]
     cval <- cor(cwd[-15,mvar],p50$Stem.P50[-15],use='pair')
     print(cval)
-    plot(cwd[,mvar],p50$Stem.P50,pch=1,col='blue',ylim=ymn,main=paste(names(cwd)[mvar],round(cval,3)),xlab='cwd niche')
-    points(cwd[-15,mvar],p50$Stem.P50[-15],pch=19,col='blue')
+    plot(cwd[,mvar],p50$Stem.P50,pch=1,col='blue',ylim=ymn,main=paste(names(cwd)[mvar],round(cval,3)),xlab='cwd niche',cex=2)
+    points(cwd[-15,mvar],p50$Stem.P50[-15],pch=19,col='blue',cex=2)
     abline(lm(p50$Stem.P50[-15]~cwd[-15,mvar]))
     #points(cwd[,mvar],p50$Leaf.P50,pch=19,col='red')
   }
@@ -51,8 +52,8 @@ for (i in 1:length(nct)) {
     mvar <- nct[i]
     cval <- cor(aet[-15,mvar],p50$Stem.P50[-15],use='pair')
     print(cval)
-    plot(aet[,mvar],p50$Stem.P50,pch=1,col='blue',ylim=ymn,main=paste(names(cwd)[mvar],round(cval,3)),xlab='aet niche')
-    points(aet[-15,mvar],p50$Stem.P50[-15],pch=19,col='blue')
+    plot(aet[,mvar],p50$Stem.P50,pch=1,col='blue',ylim=ymn,main=paste(names(cwd)[mvar],round(cval,3)),xlab='aet niche',cex=2)
+    points(aet[-15,mvar],p50$Stem.P50[-15],pch=19,col='blue',cex=2)
     abline(lm(p50$Stem.P50[-15]~aet[-15,mvar]))
     #points(cwd[,mvar],p50$Leaf.P50,pch=19,col='red')
   }

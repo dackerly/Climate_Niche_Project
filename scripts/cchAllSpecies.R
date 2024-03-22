@@ -9,25 +9,49 @@ source('scripts/prepareSpData.R')
 aet <- rast('data/gis_data/CAaet.tiff')
 cwd <- rast('data/gis_data/CAcwd.tiff')
 tmn <- rast('data/gis_data/CAtmn.tiff')
-rastS <- c(aet,cwd)
+ppt <- rast('data/gis_data/CAppt.tiff')
+tav <- rast('data/gis_data/CAtav.tiff')
+aet
+rastS <- c(tmn,ppt)
 names(rastS) <- c('aet','cwd')
 nlr <- nlyr(rastS)
 
 # also create raster class stack for maxent
 rasterS <- stack(rastS)
 
-# read in CA plant biodiversity database
-cch <- readRDS('big_data/CCH_clean_data/California_Species_clean_All_epsg_3310.Rdata')
-cch$current_name_binomial <- as.character(cch$current_name_binomial)
-names(cch)
+# Identify data set
+dset <- 'CCH_clean_2016'
+dset <- 'CCH_non_native'
 
-allSpecies <- sort(unique(cch$current_name_binomial))
-#allSpecies <- allSpecies[1:10]
-#quercus <- grep('Quercus',allSpecies)
-#allSpecies <- allSpecies[quercus]
+if (dset=='CCH_clean_2016') {
+  # read in CA plant biodiversity database
+  cch <- readRDS('big_data/CCH_clean_data/California_Species_clean_All_epsg_3310.Rdata')
+  cch$current_name_binomial <- as.character(cch$current_name_binomial)
+  names(cch)
+  
+  allSpecies <- sort(unique(cch$current_name_binomial))
+  length(allSpecies)
+  
+  (allSpecies <- allSpecies[1:10])
+  #quercus <- grep('Quercus',allSpecies)
+  #allSpecies <- allSpecies[quercus]
+}
 
-if (FALSE) { # CHANGE TO TRUE TO RERUN, OTHERWISE READ IN RESULTS BELOW
-  i=231
+if (dset=='CCH_non_native') {
+  cch <- read.csv('big_data/CCH_non_native/herbarium_data.csv',as.is=T)
+  names(cch)[grep('eFlora',names(cch))] <- 'current_name_binomial'
+  names(cch)[grep('decimalLatitude',names(cch))] <- 'latitude'
+  names(cch)[grep('decimalLongitude',names(cch))] <- 'longitude'
+  
+  allSpecies <- sort(unique(cch$current_name_binomial))
+  length(allSpecies)
+  
+  (allSpecies <- allSpecies[1:1])
+
+}
+
+if (TRUE) { # CHANGE TO TRUE TO RERUN, OTHERWISE READ IN RESULTS BELOW
+  i=1
   length(allSpecies)
   
   for (i in 1:length(allSpecies)) {
@@ -73,13 +97,16 @@ if (FALSE) { # CHANGE TO TRUE TO RERUN, OTHERWISE READ IN RESULTS BELOW
 aetAll <- read.csv('results/cchAET.csv')
 cwdAll <- read.csv('results/cchCWD.csv')
 names(aetAll)
-
+head(aetAll)
+dim(aetAll)
 
 pairs(aetAll[,c('pmn','wtm','chc','mpt','mat','opt')])
 plot(pmn~mpt,data=cwdAll,xlim=c(200,1800),ylim=c(200,1800))
 abline(0,1,lwd=2,col='red')
 
-plot(pmn~opt,data=cwdAll)
+par(mfrow=c(1,1))
+plot(pmn~mpt,data=aetAll,pch=19,col='darkgray',xlab='AET at maximum suitability',ylab='Niche mean AET across range',cex.lab=1.5)
+abline(0,1,lwd=2)
 
 names(aetAll)
 mvar <- 14
