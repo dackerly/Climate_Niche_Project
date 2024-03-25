@@ -12,8 +12,8 @@ tmn <- rast('data/gis_data/CAtmn.tiff')
 ppt <- rast('data/gis_data/CAppt.tiff')
 tav <- rast('data/gis_data/CAtav.tiff')
 
-rastS <- c(aet,cwd)
-names(rastS) <- c('aet','cwd')
+rastS <- c(tav,tmn)
+names(rastS) <- c('tav','tmn')
 nlr <- nlyr(rastS)
 
 # also create raster class stack for maxent
@@ -99,7 +99,7 @@ if (TRUE) { # CHANGE TO TRUE TO RERUN, OTHERWISE READ IN RESULTS BELOW
       }
     }
   }
-  write.csv(cnres,paste('results/',dset,'_results.csv',sep=''))
+  write.csv(cnres,paste('results/',dset,'_results_tav_tmn.csv',sep=''))
   # head(aetAll)
   # head(cwdAll)
   # #head(tmnAll)

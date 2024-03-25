@@ -12,8 +12,8 @@ tmn <- rast('data/gis_data/CAtmn.tiff')
 ppt <- rast('data/gis_data/CAppt.tiff')
 tav <- rast('data/gis_data/CAtav.tiff')
 
-rastS <- c(aet,cwd)
-names(rastS) <- c('aet','cwd')
+rastS <- c(ppt,tmn)
+names(rastS) <- c('ppt','tmn')
 nlr <- nlyr(rastS)
 
 # also create raster class stack for maxent
