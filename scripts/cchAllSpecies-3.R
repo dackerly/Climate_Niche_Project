@@ -13,7 +13,7 @@ ppt <- rast('data/gis_data/CAppt.tiff')
 tav <- rast('data/gis_data/CAtav.tiff')
 
 rastS <- c(ppt,tmn)
-names(rastS) <- c('ppt','tmn')
+names(rastS) <- c('aet','cwd')
 nlr <- nlyr(rastS)
 
 # also create raster class stack for maxent
@@ -21,8 +21,8 @@ rasterS <- stack(rastS)
 
 # Identify data set
 dset <- 'CCH_clean_2016'
-#dset <- 'TP_non_native'
-#dset <- 'PWD_non_native'
+dset <- 'TP_non_native'
+dset <- 'PWD_non_native'
 
 if (dset=='CCH_clean_2016') {
   # read in CA plant biodiversity database
@@ -40,7 +40,39 @@ if (dset=='CCH_clean_2016') {
 
 if (dset=='TP_non_native') {
   cch <- read.csv('big_data/CCH_non_native/TP_non_native.csv',as.is=T)
-  names(cch)[grep('eFlora',names(cch))] <- 'current_name_binomial'
+  
+  spnames <- (strsplit(cch$eFlora.accepted.Name,' '))
+  tail(spnames)
+  genus <- c()
+  species <- c()
+  for (i in 1:length(spnames)) {
+    genus[i] <- spnames[[i]][1]
+    species[i] <- spnames[[i]][2]
+  }
+  cch$current_name_binomial <- paste(genus,species,sep=' ')
+  head(cch$current_name_binomial)
+  
+  names(cch)[grep('decimalLatitude',names(cch))] <- 'latitude'
+  names(cch)[grep('decimalLongitude',names(cch))] <- 'longitude'
+  
+  allSpecies <- sort(unique(cch$current_name_binomial))
+  length(allSpecies)
+}
+
+if (dset=='PWD_non_native') {
+  cch <- read.csv('big_data/CCH_non_native/PWD_non_native.csv',as.is=T)
+  
+  spnames <- (strsplit(cch$ACCName,' '))
+  tail(spnames)
+  genus <- c()
+  species <- c()
+  for (i in 1:length(spnames)) {
+    genus[i] <- spnames[[i]][1]
+    species[i] <- spnames[[i]][2]
+  }
+  cch$current_name_binomial <- paste(genus,species,sep=' ')
+  head(cch$current_name_binomial)
+  
   names(cch)[grep('decimalLatitude',names(cch))] <- 'latitude'
   names(cch)[grep('decimalLongitude',names(cch))] <- 'longitude'
   
@@ -50,17 +82,19 @@ if (dset=='TP_non_native') {
   #(allSpecies <- allSpecies[1:1])
 }
 
-if (dset=='PWD_non_native') {
-  cch <- read.csv('big_data/CCH_non_native/PWD_non_native.csv',as.is=T)
-  names(cch)[grep('ACCName',names(cch))] <- 'current_name_binomial'
-  names(cch)[grep('decimalLatitude',names(cch))] <- 'latitude'
-  names(cch)[grep('decimalLongitude',names(cch))] <- 'longitude'
-  
-  allSpecies <- sort(unique(cch$current_name_binomial))
-  length(allSpecies)
-  
-  #(allSpecies <- allSpecies[1:1])
-}
+dim(cch)
+head(cch)
+length(spCounts)
+spCounts <- table(cch$current_name_binomial)
+spCounts
+spsel <- 'Polycarpon'
+spCounts[grep(spsel,names(spCounts))]
+
+head(cch[which(cch$current_name_binomial=='NULL NA'),])
+
+np <- which(cch$eFlora.accepted.Name!=cch$currentDetermination)
+length(np)
+head(cch[np,])
 
 if (TRUE) { # CHANGE TO TRUE TO RERUN, OTHERWISE READ IN RESULTS BELOW
   i=1
@@ -99,7 +133,9 @@ if (TRUE) { # CHANGE TO TRUE TO RERUN, OTHERWISE READ IN RESULTS BELOW
       }
     }
   }
-  write.csv(cnres,paste('results/',dset,'_results.csv',sep=''))
+  vn <- names(rastS)[1]
+  vn <- paste(vn,names(rastS)[2],sep='_') 
+  write.csv(cnres,paste('results/',dset,vn,'results.csv',sep='_'))
   # head(aetAll)
   # head(cwdAll)
   # #head(tmnAll)
